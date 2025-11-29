@@ -1,0 +1,58 @@
+# Trajectory Synthetic Data Generator Configuration
+
+# AWS Bedrock Settings
+bedrock:
+  region: "us-east-1"
+  model_id: "anthropic.claude-sonnet-4-20250514-v1:0"
+  embedding_model_id: "amazon.titan-embed-text-v2:0"
+  max_tokens: 64000
+  temperature: 0.7
+
+# PDF Processing
+pdf_processing:
+  extract_images: true
+  chunk_size: 4000
+  chunk_overlap: 200
+  use_vision_for_images: true
+
+# ChromaDB Settings
+chromadb:
+  persist_directory: "data/chromadb"
+  collection_name: "document_chunks"
+  distance_metric: "cosine"
+
+# Tool Definitions
+tools:
+  definitions_file: "config/tools.json"
+  enable_tool_use: true
+
+# Generation Settings
+generation:
+  target_qa_pairs: 50
+  expansion_factor: 30
+  complexity_distribution:
+    simple: 0.3
+    medium: 0.5
+    complex: 0.2
+
+# Output Settings
+output:
+  format: "jsonl"
+  output_dir: "data/output"
+  save_trajectories: true
+  
+  schema:
+    type: "trajectory"
+    fields:
+      query: "Q"
+      cot: "COT"
+      tools: "Tool Set"
+      decision: "Decision"
+    include_reasoning: true
+    include_metadata: true
+    include_tool_results: false
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/trajectory_generator.log"

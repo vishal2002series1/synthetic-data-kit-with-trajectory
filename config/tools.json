@@ -1,0 +1,64 @@
+{
+  "tools": [
+    {
+      "name": "search_knowledge_base",
+      "description": "Search the knowledge base for relevant information",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "n_results": {
+            "type": "integer",
+            "description": "Number of results to return",
+            "default": 3
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "get_account_info",
+      "description": "Retrieve user account information",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "User identifier"
+          },
+          "info_type": {
+            "type": "string",
+            "description": "Type of information to retrieve",
+            "enum": ["profile", "balance", "holdings", "transactions"]
+          }
+        },
+        "required": ["user_id", "info_type"]
+      }
+    },
+    {
+      "name": "calculate_returns",
+      "description": "Calculate investment returns over a period",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "description": "Start date (YYYY-MM-DD)"
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date (YYYY-MM-DD)"
+          },
+          "account_id": {
+            "type": "string",
+            "description": "Account identifier"
+          }
+        },
+        "required": ["start_date", "end_date"]
+      }
+    }
+  ]
+}
