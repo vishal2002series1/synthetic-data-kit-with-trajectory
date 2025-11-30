@@ -106,3 +106,20 @@ These datasets teach SLMs to:
 ---
 
 For more information, see the main project README.
+
+## 🔮 Vision Enhancement (Future)
+
+Current system captures **text references** to figures/charts (42% of chunks).  
+Full vision analysis (image extraction + Claude vision API) is documented in:
+- [`docs/VISION_ENHANCEMENT.md`](../docs/VISION_ENHANCEMENT.md)
+- [`docs/TODO_VISION.txt`](../docs/TODO_VISION.txt)
+
+**Current capabilities:**
+- ✅ Text extraction from PDFs
+- ✅ Figure/chart reference capture
+- ✅ Context around visual elements
+
+**Future enhancement:**
+- ⏳ Image extraction from PDFs
+- ⏳ Vision API analysis
+- ⏳ Visual description embedding
