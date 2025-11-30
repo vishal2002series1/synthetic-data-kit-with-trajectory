@@ -1,0 +1,28 @@
+{
+  "total_examples": 6,
+  "cot_length": {
+    "mean": 386.6666666666667,
+    "median": 375.0,
+    "min": 319,
+    "max": 461
+  },
+  "decision_distribution": {
+    "ASK": 1,
+    "CALL": 3,
+    "ANSWER": 2
+  },
+  "tool_usage": {
+    "mean_tools_per_example": 0.6666666666666666,
+    "max_tools": 2,
+    "examples_with_tools": 3
+  },
+  "iteration_distribution": {
+    "0": 3,
+    "1": 2,
+    "2": 1
+  },
+  "query_length": {
+    "mean": 63.333333333333336,
+    "median": 62.5
+  }
+}
