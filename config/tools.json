@@ -1,64 +1,1109 @@
 {
-  "tools": [
-    {
-      "name": "search_knowledge_base",
-      "description": "Search the knowledge base for relevant information",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "Search query"
+    "tools": [
+      {
+        "name": "get_client_risk_profile",
+        "description": "Retrieve or compute a client's risk profile based on their preferences, time horizon, and financial situation.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier for the client."
+            },
+            "override_answers": {
+              "type": "object",
+              "description": "Optional override of questionnaire answers for what-if analysis (e.g., different risk tolerance). Key-value pairs of question_id: answer.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
           },
-          "n_results": {
-            "type": "integer",
-            "description": "Number of results to return",
-            "default": 3
-          }
+          "required": ["client_id"]
         },
-        "required": ["query"]
-      }
-    },
-    {
-      "name": "get_account_info",
-      "description": "Retrieve user account information",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "description": "User identifier"
-          },
-          "info_type": {
-            "type": "string",
-            "description": "Type of information to retrieve",
-            "enum": ["profile", "balance", "holdings", "transactions"]
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "risk_profile_id": { "type": "string" },
+            "risk_label": {
+              "type": "string",
+              "description": "Human-readable label such as 'Conservative', 'Moderate', 'Aggressive'."
+            },
+            "risk_score": {
+              "type": "number",
+              "description": "Numeric risk score, typically on a standardized scale (e.g., 1–100)."
+            },
+            "time_horizon_years": { "type": "number" },
+            "recommended_equity_range": {
+              "type": "object",
+              "properties": {
+                "min": { "type": "number" },
+                "max": { "type": "number" }
+              }
+            },
+            "notes": {
+              "type": "string",
+              "description": "Short explanation of how the risk profile was determined."
+            }
           }
+        }
+      },
+      {
+        "name": "suggest_model_portfolio",
+        "description": "Suggest a model portfolio based on the client's risk profile, investment horizon, and goals.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "risk_profile_id": {
+              "type": "string",
+              "description": "Identifier for the client's risk profile or risk band (e.g., 'conservative', 'moderate')."
+            },
+            "investment_horizon_years": {
+              "type": "number",
+              "description": "Investment time horizon in years."
+            },
+            "goal_type": {
+              "type": "string",
+              "description": "Primary goal type (e.g., 'retirement', 'education', 'wealth_accumulation', 'income')."
+            },
+            "currency": {
+              "type": "string",
+              "description": "Base currency code for the portfolio (e.g., 'USD', 'EUR').",
+              "default": "USD"
+            }
+          },
+          "required": ["risk_profile_id", "investment_horizon_years", "goal_type"]
         },
-        "required": ["user_id", "info_type"]
-      }
-    },
-    {
-      "name": "calculate_returns",
-      "description": "Calculate investment returns over a period",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "start_date": {
-            "type": "string",
-            "description": "Start date (YYYY-MM-DD)"
-          },
-          "end_date": {
-            "type": "string",
-            "description": "End date (YYYY-MM-DD)"
-          },
-          "account_id": {
-            "type": "string",
-            "description": "Account identifier"
+        "response": {
+          "type": "object",
+          "properties": {
+            "model_portfolio_id": { "type": "string" },
+            "name": { "type": "string" },
+            "currency": { "type": "string" },
+            "target_return": {
+              "type": "number",
+              "description": "Expected annualized return (e.g., 0.06 for 6%)."
+            },
+            "target_volatility": {
+              "type": "number",
+              "description": "Expected annualized volatility."
+            },
+            "asset_class_weights": {
+              "type": "array",
+              "description": "Target weights by asset class.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_class": { "type": "string" },
+                  "weight": { "type": "number" }
+                }
+              }
+            },
+            "recommended_min_horizon_years": { "type": "number" },
+            "suitability_summary": {
+              "type": "string",
+              "description": "Textual explanation of why this portfolio is suitable for the client profile."
+            }
           }
+        }
+      },
+      {
+        "name": "optimize_asset_allocation",
+        "description": "Run portfolio optimization to suggest an asset allocation given constraints (e.g., risk, return, concentration limits).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "current_holdings": {
+              "type": "array",
+              "description": "List of current holdings with asset_id and weight or amount.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "weight": {
+                    "type": "number",
+                    "description": "Current portfolio weight (0–1). Either weight or amount must be provided."
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Current market value in base currency."
+                  }
+                }
+              }
+            },
+            "target_risk_level": {
+              "type": "string",
+              "description": "Target risk level or volatility band (e.g., 'low', 'medium', 'high', or numeric volatility target)."
+            },
+            "constraints": {
+              "type": "object",
+              "description": "Optional constraints such as max single-asset weight, min cash, ESG exclusions, etc.",
+              "additionalProperties": true
+            }
+          },
+          "required": ["current_holdings", "target_risk_level"]
         },
-        "required": ["start_date", "end_date"]
+        "response": {
+          "type": "object",
+          "properties": {
+            "optimized_allocation": {
+              "type": "array",
+              "description": "Recommended target allocation per asset.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "target_weight": { "type": "number" }
+                }
+              }
+            },
+            "expected_return": { "type": "number" },
+            "expected_volatility": { "type": "number" },
+            "sharpe_ratio": { "type": "number" },
+            "constraint_violations": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of constraints that could not be fully satisfied, if any."
+            }
+          }
+        }
+      },
+      {
+        "name": "project_portfolio_growth",
+        "description": "Run forward-looking simulations or projections of portfolio value over time using assumed returns and volatility.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "initial_value": {
+              "type": "number",
+              "description": "Starting portfolio value."
+            },
+            "annual_contribution": {
+              "type": "number",
+              "description": "Annual contribution to the portfolio (can be 0).",
+              "default": 0
+            },
+            "years": {
+              "type": "integer",
+              "description": "Number of years to project."
+            },
+            "expected_return": {
+              "type": "number",
+              "description": "Expected average annual return (e.g., 0.06 for 6%)."
+            },
+            "volatility": {
+              "type": "number",
+              "description": "Expected annualized volatility (standard deviation of returns, e.g., 0.12 for 12%)."
+            },
+            "simulation_type": {
+              "type": "string",
+              "description": "Projection method (e.g., 'deterministic', 'monte_carlo').",
+              "default": "deterministic"
+            },
+            "num_scenarios": {
+              "type": "integer",
+              "description": "Number of scenarios for Monte Carlo simulations.",
+              "default": 1000
+            }
+          },
+          "required": ["initial_value", "years", "expected_return"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "projection_type": { "type": "string" },
+            "years": { "type": "integer" },
+            "deterministic_path": {
+              "type": "array",
+              "description": "For deterministic projections, list of yearly projected portfolio values.",
+              "items": { "type": "number" }
+            },
+            "percentile_paths": {
+              "type": "object",
+              "description": "For Monte Carlo, key-value pairs of percentile -> value path.",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "number" }
+              }
+            },
+            "summary_stats": {
+              "type": "object",
+              "properties": {
+                "median_ending_value": { "type": "number" },
+                "p10_ending_value": { "type": "number" },
+                "p90_ending_value": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "assess_goal_achievement_probability",
+        "description": "Assess the probability of achieving a specific financial goal given portfolio characteristics and contributions.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "current_portfolio_value": {
+              "type": "number",
+              "description": "Current value of the portfolio."
+            },
+            "annual_contribution": {
+              "type": "number",
+              "description": "Planned annual contribution towards the goal.",
+              "default": 0
+            },
+            "time_horizon_years": {
+              "type": "integer",
+              "description": "Time horizon for the goal in years."
+            },
+            "target_goal_amount": {
+              "type": "number",
+              "description": "Target amount required for the goal at the end of the horizon."
+            },
+            "expected_return": {
+              "type": "number",
+              "description": "Expected annual return (e.g., 0.07 for 7%)."
+            },
+            "volatility": {
+              "type": "number",
+              "description": "Expected annualized volatility.",
+              "default": 0.12
+            },
+            "confidence_levels": {
+              "type": "array",
+              "description": "Confidence levels at which to estimate probability (e.g., [0.5, 0.75, 0.9]).",
+              "items": { "type": "number" },
+              "default": [0.5, 0.75, 0.9]
+            }
+          },
+          "required": [
+            "current_portfolio_value",
+            "time_horizon_years",
+            "target_goal_amount",
+            "expected_return"
+          ]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "probability_of_success": {
+              "type": "number",
+              "description": "Estimated probability (0–1) that the goal will be met or exceeded."
+            },
+            "distribution_summary": {
+              "type": "object",
+              "properties": {
+                "median_ending_value": { "type": "number" },
+                "p10_ending_value": { "type": "number" },
+                "p90_ending_value": { "type": "number" }
+              }
+            },
+            "shortfall_amount_if_median": {
+              "type": "number",
+              "description": "If median outcome is below target, expected shortfall amount; otherwise 0."
+            },
+            "recommendation": {
+              "type": "string",
+              "description": "High-level guidance (e.g., increase contributions, extend horizon, or increase risk)."
+            }
+          }
+        }
+      },
+      {
+        "name": "rebalance_portfolio",
+        "description": "Generate a set of trades to rebalance a portfolio from current weights to target weights, considering constraints like tax and fees.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier for the client."
+            },
+            "target_allocation": {
+              "type": "array",
+              "description": "List of target weights per asset or asset class.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "target_weight": { "type": "number" }
+                },
+                "required": ["asset_id", "target_weight"]
+              }
+            },
+            "tolerance_band": {
+              "type": "number",
+              "description": "Allowed deviation from target weights before rebalancing (e.g., 0.02 for ±2%).",
+              "default": 0.02
+            },
+            "tax_sensitivity": {
+              "type": "string",
+              "description": "Level of sensitivity to realizing taxable gains (e.g., 'low', 'medium', 'high').",
+              "default": "medium"
+            },
+            "max_turnover_pct": {
+              "type": "number",
+              "description": "Maximum percentage of portfolio value allowed to trade during rebalance.",
+              "default": 0.25
+            }
+          },
+          "required": ["client_id", "target_allocation"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "trades": {
+              "type": "array",
+              "description": "List of recommended trades to achieve the target allocation.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "action": { "type": "string", "description": "buy or sell" },
+                  "quantity": { "type": "number" },
+                  "estimated_value": { "type": "number" }
+                }
+              }
+            },
+            "post_trade_allocation": {
+              "type": "array",
+              "description": "Expected allocation after executing trades.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "weight": { "type": "number" }
+                }
+              }
+            },
+            "estimated_transaction_costs": { "type": "number" },
+            "turnover_pct": { "type": "number" }
+          }
+        }
+      },
+      {
+        "name": "evaluate_tax_impact",
+        "description": "Estimate the tax impact of proposed transactions or rebalancing for a client.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Unique client identifier."
+            },
+            "transactions": {
+              "type": "array",
+              "description": "List of proposed transactions with asset_id, quantity, and action (buy/sell).",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "action": {
+                    "type": "string",
+                    "description": "Transaction type: 'buy' or 'sell'."
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "description": "Number of units to transact."
+                  }
+                },
+                "required": ["asset_id", "action", "quantity"]
+              }
+            },
+            "tax_year": {
+              "type": "integer",
+              "description": "Tax year for which to estimate the impact.",
+              "default": 2025
+            }
+          },
+          "required": ["client_id", "transactions"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "tax_year": { "type": "integer" },
+            "realized_gains": {
+              "type": "object",
+              "properties": {
+                "short_term": { "type": "number" },
+                "long_term": { "type": "number" }
+              }
+            },
+            "estimated_tax_liability": { "type": "number" },
+            "notes": {
+              "type": "string",
+              "description": "Comments on key contributors to tax impact."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_asset_details",
+        "description": "Retrieve details for one or more assets such as type, sector, country, risk metrics, and ESG scores.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "asset_ids": {
+              "type": "array",
+              "description": "List of asset identifiers (e.g., tickers, ISINs, internal IDs).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fields": {
+              "type": "array",
+              "description": "Optional subset of fields to return (e.g., ['asset_class','sector','beta','esg_score']).",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["asset_ids"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "assets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "ticker": { "type": "string" },
+                  "asset_class": { "type": "string" },
+                  "sector": { "type": "string" },
+                  "region": { "type": "string" },
+                  "currency": { "type": "string" },
+                  "beta": { "type": "number" },
+                  "volatility": { "type": "number" },
+                  "esg_score": { "type": "number" },
+                  "expense_ratio": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_portfolio_risk",
+        "description": "Analyze portfolio risk using metrics like volatility, VaR, beta, drawdown, and concentration.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose portfolio is to be analyzed."
+            },
+            "lookback_period": {
+              "type": "string",
+              "description": "Historical lookback period for risk analysis (e.g., '1Y', '3Y', '5Y').",
+              "default": "3Y"
+            },
+            "risk_measures": {
+              "type": "array",
+              "description": "List of risk metrics to compute (e.g., ['volatility','var','max_drawdown']).",
+              "items": {
+                "type": "string"
+              },
+              "default": ["volatility", "var", "max_drawdown"]
+            },
+            "confidence_level": {
+              "type": "number",
+              "description": "Confidence level for VaR/ES metrics (e.g., 0.95).",
+              "default": 0.95
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "lookback_period": { "type": "string" },
+            "risk_metrics": {
+              "type": "object",
+              "properties": {
+                "volatility": { "type": "number" },
+                "value_at_risk": { "type": "number" },
+                "expected_shortfall": { "type": "number" },
+                "max_drawdown": { "type": "number" },
+                "beta_vs_benchmark": { "type": "number" },
+                "concentration_top_10_pct": { "type": "number" }
+              }
+            },
+            "comments": {
+              "type": "string",
+              "description": "Natural-language summary of key risk insights."
+            }
+          }
+        }
+      },
+      {
+        "name": "stress_test_portfolio",
+        "description": "Perform stress tests on a portfolio under various historical or hypothetical market scenarios.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose portfolio is to be stress tested."
+            },
+            "scenarios": {
+              "type": "array",
+              "description": "List of scenarios to apply (e.g., '2008_crisis', 'rate_shock_200bps', or custom).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "custom_scenario_definition": {
+              "type": "object",
+              "description": "Optional custom scenario configuration (e.g., shock by asset class, factor shocks).",
+              "additionalProperties": true
+            }
+          },
+          "required": ["client_id", "scenarios"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "results": {
+              "type": "array",
+              "description": "Stress test outcome per scenario.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "scenario_id": { "type": "string" },
+                  "scenario_name": { "type": "string" },
+                  "portfolio_value_change_pct": { "type": "number" },
+                  "portfolio_value_change_abs": { "type": "number" },
+                  "worst_hit_positions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "asset_id": { "type": "string" },
+                        "pnl_pct": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "string",
+              "description": "High-level description of portfolio behavior across scenarios."
+            }
+          }
+        }
+      },
+      {
+        "name": "generate_investment_proposal",
+        "description": "Generate a structured investment proposal for a client, including recommended allocation and rationale.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client for whom the proposal is generated."
+            },
+            "target_model_portfolio_id": {
+              "type": "string",
+              "description": "ID of the recommended model portfolio."
+            },
+            "include_risk_disclosures": {
+              "type": "boolean",
+              "description": "Whether to include standardized risk disclosures and disclaimers.",
+              "default": true
+            },
+            "include_cost_breakdown": {
+              "type": "boolean",
+              "description": "Whether to include estimated costs and fees in the proposal.",
+              "default": true
+            }
+          },
+          "required": ["client_id", "target_model_portfolio_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "proposal_id": { "type": "string" },
+            "client_id": { "type": "string" },
+            "summary": { "type": "string" },
+            "recommended_allocation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_class": { "type": "string" },
+                  "weight": { "type": "number" }
+                }
+              }
+            },
+            "projected_outcomes": {
+              "type": "object",
+              "properties": {
+                "expected_return": { "type": "number" },
+                "expected_volatility": { "type": "number" }
+              }
+            },
+            "fee_summary": {
+              "type": "object",
+              "properties": {
+                "total_fee_pct": { "type": "number" },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": { "type": "string" },
+                      "amount_pct": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            },
+            "risk_disclosures": {
+              "type": "string",
+              "description": "Standardized risk and compliance text."
+            }
+          }
+        }
+      },
+      {
+        "name": "summarize_portfolio_health",
+        "description": "Summarize a client's overall portfolio health, highlighting strengths, weaknesses, and key alerts.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client identifier."
+            },
+            "focus_areas": {
+              "type": "array",
+              "description": "Optional focus areas (e.g., ['diversification','liquidity','income']).",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "overall_score": {
+              "type": "number",
+              "description": "Aggregate health score (e.g., 0–100)."
+            },
+            "highlights": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "risks": {
+              "type": "array",
+              "description": "Key risk items or weaknesses.",
+              "items": { "type": "string" }
+            },
+            "action_items": {
+              "type": "array",
+              "description": "Recommended follow-up actions.",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      {
+        "name": "screen_investments",
+        "description": "Screen and filter investments based on criteria such as asset class, region, yield, ESG score, or minimum rating.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "universe": {
+              "type": "string",
+              "description": "Investment universe scope (e.g., 'global_equities', 'us_bonds', 'all_funds')."
+            },
+            "filters": {
+              "type": "object",
+              "description": "Filter criteria (e.g., min_yield, max_expense_ratio, esg_min_score).",
+              "additionalProperties": true
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of investments to return.",
+              "default": 50
+            },
+            "sort_by": {
+              "type": "string",
+              "description": "Field to sort results by (e.g., '3y_return', 'yield', 'volatility').",
+              "default": "3y_return"
+            },
+            "sort_order": {
+              "type": "string",
+              "description": "Sort order: 'asc' or 'desc'.",
+              "default": "desc"
+            }
+          },
+          "required": ["universe"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "universe": { "type": "string" },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "asset_class": { "type": "string" },
+                  "region": { "type": "string" },
+                  "yield": { "type": "number" },
+                  "3y_return": { "type": "number" },
+                  "volatility": { "type": "number" },
+                  "esg_score": { "type": "number" },
+                  "expense_ratio": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "calculate_portfolio_fees",
+        "description": "Calculate total and component-level fees for a client's portfolio including product, advisory, and transaction fees.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose portfolio fees are being calculated."
+            },
+            "include_hidden_costs": {
+              "type": "boolean",
+              "description": "Whether to estimate implicit costs (e.g., bid-ask spread, market impact).",
+              "default": false
+            },
+            "annualize": {
+              "type": "boolean",
+              "description": "Whether to express fees as an annualized amount/percentage.",
+              "default": true
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "total_fee_amount": { "type": "number" },
+            "total_fee_pct": { "type": "number" },
+            "components": {
+              "type": "array",
+              "description": "Breakdown of different fee components.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "component_type": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "amount_pct": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "run_cashflow_projection",
+        "description": "Model future cashflows for a client, including inflows (salary, contributions) and outflows (expenses, withdrawals).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose cashflows to project."
+            },
+            "projection_years": {
+              "type": "integer",
+              "description": "Number of years for the projection.",
+              "default": 30
+            },
+            "assumptions": {
+              "type": "object",
+              "description": "Optional assumptions like inflation rate, income growth, etc.",
+              "additionalProperties": true
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "projection_years": { "type": "integer" },
+            "yearly_cashflows": {
+              "type": "array",
+              "description": "Per-year inflow, outflow and net cashflow.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "year_offset": { "type": "integer" },
+                  "inflows": { "type": "number" },
+                  "outflows": { "type": "number" },
+                  "net_cashflow": { "type": "number" }
+                }
+              }
+            },
+            "present_value_of_net_cashflows": { "type": "number" }
+          }
+        }
+      },
+      {
+        "name": "check_suitability_and_compliance",
+        "description": "Check if a recommended investment or portfolio is suitable and compliant with regulations and internal policies for a client.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client identifier."
+            },
+            "recommended_holdings": {
+              "type": "array",
+              "description": "List of recommended holdings with asset_id and weight or amount.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": { "type": "string" },
+                  "weight": { "type": "number" },
+                  "amount": { "type": "number" }
+                }
+              }
+            },
+            "recommendation_type": {
+              "type": "string",
+              "description": "Type of recommendation (e.g., 'discretionary_mandate', 'advisory_suggestion').",
+              "default": "advisory_suggestion"
+            }
+          },
+          "required": ["client_id", "recommended_holdings"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "is_suitable": { "type": "boolean" },
+            "is_compliant": { "type": "boolean" },
+            "breaches": {
+              "type": "array",
+              "description": "List of specific policy or rule breaches, if any.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rule_id": { "type": "string" },
+                  "description": { "type": "string" },
+                  "severity": { "type": "string" }
+                }
+              }
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional commentary or remediation suggestions."
+            }
+          }
+        }
+      },
+      {
+        "name": "generate_regulatory_reports",
+        "description": "Generate regulatory or internal reports for a client or portfolio (e.g., MiFID, KYC status, periodic statements).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "report_type": {
+              "type": "string",
+              "description": "Type of report (e.g., 'periodic_statement', 'costs_charges', 'kyc_summary')."
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Client identifier for client-level reports."
+            },
+            "as_of_date": {
+              "type": "string",
+              "description": "Date for which to generate the report (YYYY-MM-DD)."
+            },
+            "output_format": {
+              "type": "string",
+              "description": "Desired output format (e.g., 'pdf', 'json').",
+              "default": "pdf"
+            }
+          },
+          "required": ["report_type"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "report_id": { "type": "string" },
+            "report_type": { "type": "string" },
+            "client_id": { "type": "string" },
+            "as_of_date": { "type": "string" },
+            "output_format": { "type": "string" },
+            "download_url": {
+              "type": "string",
+              "description": "URL or reference from which to download the generated report."
+            }
+          }
+        }
+      },
+      {
+        "name": "monitor_portfolio_alerts",
+        "description": "Retrieve current alerts or breaches for a client portfolio such as drift, risk limit breaches, or cash shortfalls.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose alerts to retrieve."
+            },
+            "severity_level": {
+              "type": "string",
+              "description": "Minimum severity level to include (e.g., 'info', 'warning', 'critical').",
+              "default": "warning"
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "alerts": {
+              "type": "array",
+              "description": "List of active alerts for this portfolio.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "alert_id": { "type": "string" },
+                  "type": { "type": "string" },
+                  "severity": { "type": "string" },
+                  "message": { "type": "string" },
+                  "created_at": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "compare_portfolio_to_benchmark",
+        "description": "Compare a client's portfolio performance and risk versus one or more benchmarks.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client whose portfolio is being compared."
+            },
+            "benchmark_ids": {
+              "type": "array",
+              "description": "List of benchmark identifiers for comparison.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "period": {
+              "type": "string",
+              "description": "Comparison period (e.g., 'YTD', '1Y', '3Y', 'since_inception').",
+              "default": "1Y"
+            },
+            "metrics": {
+              "type": "array",
+              "description": "Performance/risk metrics to compare (e.g., ['return', 'volatility', 'sharpe']).",
+              "items": {
+                "type": "string"
+              },
+              "default": ["return", "volatility", "sharpe"]
+            }
+          },
+          "required": ["client_id", "benchmark_ids"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "period": { "type": "string" },
+            "comparisons": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "benchmark_id": { "type": "string" },
+                  "portfolio_return": { "type": "number" },
+                  "benchmark_return": { "type": "number" },
+                  "portfolio_volatility": { "type": "number" },
+                  "benchmark_volatility": { "type": "number" },
+                  "portfolio_sharpe": { "type": "number" },
+                  "benchmark_sharpe": { "type": "number" },
+                  "alpha": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "suggest_next_best_action",
+        "description": "Suggest the next best action for a relationship manager or client, based on portfolio status, goals, and alerts.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "description": "Client for whom to suggest an action."
+            },
+            "context": {
+              "type": "string",
+              "description": "Context of interaction (e.g., 'annual_review', 'inbound_call', 'digital_app').",
+              "default": "annual_review"
+            },
+            "max_suggestions": {
+              "type": "integer",
+              "description": "Maximum number of actions to suggest.",
+              "default": 3
+            }
+          },
+          "required": ["client_id"]
+        },
+        "response": {
+          "type": "object",
+          "properties": {
+            "client_id": { "type": "string" },
+            "context": { "type": "string" },
+            "suggestions": {
+              "type": "array",
+              "description": "Ranked list of suggested next best actions.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "action_id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "priority": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
       }
+    ],
+    "tool_choice": "auto",
+    "metadata": {
+      "version": "1.1",
+      "domain": "wealth_asset_management",
+      "description": "Tool definitions for wealth and asset management use cases including portfolio analysis, optimization, compliance, and client engagement. Each tool includes an indicative response schema for easier integration."
     }
-  ]
-}
+  }
