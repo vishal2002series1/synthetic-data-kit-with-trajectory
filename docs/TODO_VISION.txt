@@ -1,0 +1,41 @@
+# Vision Enhancement TODOs
+
+## Location: src/core/pdf_parser.py
+
+Add these methods when implementing vision:
+
+1. extract_images_from_pdf(pdf_path)
+   - Extract images from PDF pages
+   - Return list of PIL Image objects with metadata
+
+2. analyze_image_with_vision(image, context)
+   - Call Bedrock vision API
+   - Get description of chart/graph/diagram
+
+3. integrate_vision_into_chunks(chunks, vision_results)
+   - Embed vision descriptions near related text
+   - Set has_vision_content=True in metadata
+
+## Location: src/core/bedrock_provider.py
+
+4. Add vision API support:
+   - analyze_image() method
+   - Handle base64 image encoding
+   - Vision-specific prompts
+
+## Testing
+
+5. Create test scripts:
+   - scripts/test_image_extraction.py
+   - scripts/test_vision_api.py
+   - scripts/test_vision_integration.py
+
+## Configuration
+
+6. Update config/config.yaml:
+   - Add vision section
+   - Vision model ID
+   - Image size limits
+   - Vision prompts
+
+See docs/VISION_ENHANCEMENT.md for full details.

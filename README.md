@@ -71,3 +71,16 @@ MIT License - See LICENSE file for details
 
 🚧 **Active Development** - Clean rebuild in progress
 EOF
+## 🔮 Future Enhancements
+
+### Vision Analysis (Planned)
+
+Currently captures text references to figures/charts (42% of chunks). Full vision enhancement will add:
+- Image extraction from PDFs
+- Claude vision API analysis of charts/graphs/diagrams
+- Embedded visual descriptions in training data
+
+See [`docs/VISION_ENHANCEMENT.md`](docs/VISION_ENHANCEMENT.md) for implementation guide.
+
+**Status:** Placeholder - system is fully functional without this  
+**Priority:** Low - optional quality improvement
