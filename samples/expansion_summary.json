@@ -1,0 +1,15 @@
+{
+  "total_seed_queries": 3,
+  "total_variants": 90,
+  "expansion_factor": 30,
+  "breakdown": {
+    "personas": 5,
+    "complexity_levels": 3,
+    "tool_variants": 2
+  },
+  "seed_queries": [
+    "How should I diversify my investment portfolio?",
+    "What are the risks in my current portfolio?",
+    "How can I optimize my asset allocation?"
+  ]
+}
